@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Funnels')}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<main class="container pb-5">
+    <div th:replace="~{layout :: flash}"></div>
+    <h1 class="h3 mb-4">Hiring funnels</h1>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <p class="text-muted" th:if="${funnels.isEmpty()}">No funnels yet. Create the first one.</p>
+            <div class="card mb-3" th:each="f : ${funnels}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h2 class="h5 mb-1" th:text="${f.name}">Software Engineer</h2>
+                        <span class="small text-muted" th:text="'owner: ' + ${f.recruiterName}">owner</span>
+                    </div>
+                    <p class="text-muted small mb-2" th:text="${f.description}">description</p>
+                    <ol class="mb-0 ps-3">
+                        <li th:each="t : ${f.interviewTypes}" th:text="${t.name}">Phone Screen</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">New funnel</div>
+                <form class="card-body" method="post" th:action="@{/funnels}">
+                    <div class="mb-3">
+                        <label class="form-label" for="name">Name</label>
+                        <input class="form-control" id="name" name="name" required placeholder="Software Engineer">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="description">Description</label>
+                        <input class="form-control" id="description" name="description">
+                    </div>
+                    <label class="form-label">Interviews, in order</label>
+                    <select class="form-select mb-2" name="interviewTypeIds" th:each="n : ${#numbers.sequence(1, 6)}">
+                        <option value="" th:text="${n} + '. —'">—</option>
+                        <option th:each="t : ${interviewTypes}" th:value="${t.id}" th:text="${n} + '. ' + ${t.name}">type</option>
+                    </select>
+                    <p class="small text-muted">Missing an interview type? Add it in the <a th:href="@{/catalog}">catalog</a>.</p>
+                    <button class="btn btn-dark w-100" type="submit">Create funnel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+<script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>

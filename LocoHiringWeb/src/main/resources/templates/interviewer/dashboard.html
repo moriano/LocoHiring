@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('My interviews')}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<main class="container pb-5">
+    <div th:replace="~{layout :: flash}"></div>
+    <h1 class="h3 mb-4">Hi <span th:text="${me.name()}">Peter</span></h1>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between">
+                    Pending feedback
+                    <span class="badge text-bg-danger" th:if="${!pending.isEmpty()}" th:text="${pending.size()}">2</span>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item text-muted" th:if="${pending.isEmpty()}">You are all caught up.</li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center" th:each="p : ${pending}">
+                        <div>
+                            <a th:href="@{/interviews/{id}(id=${p.interview.id})}" class="fw-semibold"
+                               th:text="${p.interview.candidateName}">Adam</a>
+                            <span class="text-muted" th:text="'· ' + ${p.interview.interviewTypeName}">· Phone Screen</span>
+                            <div class="small text-muted" th:text="'Interviewed ' + ${@fmt.dateTime(p.interview.scheduledAt)}">date</div>
+                        </div>
+                        <span th:if="${p.late}" class="badge text-bg-danger" th:text="'Late since ' + ${@fmt.dateTime(p.dueAt)}">Late</span>
+                        <span th:unless="${p.late}" class="badge text-bg-warning" th:text="'Due ' + ${@fmt.dateTime(p.dueAt)}">Due</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">Upcoming interviews</div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item text-muted" th:if="${upcoming.isEmpty()}">No interviews scheduled.
+                        <a th:href="@{/calendar}">Add availability</a> so recruiters can book you.</li>
+                    <li class="list-group-item" th:each="i : ${upcoming}">
+                        <div class="d-flex justify-content-between">
+                            <a th:href="@{/interviews/{id}(id=${i.id})}" class="fw-semibold" th:text="${i.candidateName}">Adam</a>
+                            <span class="small" th:text="${@fmt.dateTime(i.scheduledAt)}">date</span>
+                        </div>
+                        <div class="small text-muted">
+                            <span th:text="${i.interviewTypeName}">Phone Screen</span> ·
+                            <span th:text="${i.positionName}">Position</span>
+                            <span class="badge text-bg-light border ms-1" th:if="${i.shadowId == me.id()}">shadow</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">Upcoming debriefs</div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item text-muted" th:if="${debriefs.isEmpty()}">No debriefs scheduled.</li>
+                    <li class="list-group-item d-flex justify-content-between" th:each="d : ${debriefs}">
+                        <div>
+                            <a th:href="@{/applications/{id}(id=${d.applicationId})}" class="fw-semibold" th:text="${d.candidateName}">Adam</a>
+                            <span class="text-muted" th:text="'· ' + ${d.funnelName}">· Funnel</span>
+                        </div>
+                        <span th:text="${@fmt.dateTime(d.scheduledAt)}">date</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+<script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>

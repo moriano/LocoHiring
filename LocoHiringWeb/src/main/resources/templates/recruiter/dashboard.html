@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('My candidates')}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<main class="container pb-5">
+    <div th:replace="~{layout :: flash}"></div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0" th:text="${me.admin()} ? 'All candidates in a funnel' : 'My candidates'">My candidates</h1>
+        <a class="btn btn-dark" th:href="@{/candidates}">Register or find a candidate</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Candidate</th>
+                    <th>Funnel</th>
+                    <th th:if="${me.admin()}">Recruiter</th>
+                    <th>Status</th>
+                    <th>Interviews</th>
+                    <th>Feedback</th>
+                    <th>Debrief</th>
+                    <th>Next step</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${overviews.isEmpty()}">
+                    <td colspan="8" class="text-muted">No candidates in a funnel yet. Open a candidate and start an application.</td>
+                </tr>
+                <tr th:each="o : ${overviews}" th:with="a=${o.application}">
+                    <td><a class="fw-semibold" th:href="@{/applications/{id}(id=${a.id})}" th:text="${a.candidateName}">Adam</a></td>
+                    <td th:text="${a.funnelName}">Funnel</td>
+                    <td th:if="${me.admin()}" th:text="${a.recruiterName}">Alice</td>
+                    <td><span th:replace="~{layout :: applicationStatus(${a.status})}"></span></td>
+                    <td>
+                        <span th:text="${o.completedInterviews} + ' / ' + ${o.totalInterviews} + ' done'">1 / 3</span>
+                        <div class="small text-warning-emphasis" th:if="${o.interviewsToSchedule > 0 and a.status.value == 'ACTIVE'}"
+                             th:text="${o.interviewsToSchedule} + ' to schedule'">2 to schedule</div>
+                    </td>
+                    <td>
+                        <span th:if="${o.pendingFeedback == 0}" class="text-muted">—</span>
+                        <span th:if="${o.pendingFeedback > 0}" class="badge"
+                              th:classappend="${o.feedbackLate} ? 'text-bg-danger' : 'text-bg-warning'"
+                              th:text="${o.pendingFeedback} + ' missing' + (${o.feedbackLate} ? ', late' : '')">1 missing</span>
+                    </td>
+                    <td>
+                        <span th:if="${o.debrief == null and !o.debriefLate}" class="text-muted">—</span>
+                        <th:block th:if="${o.debrief != null and o.debrief.completed}">
+                            <span th:replace="~{layout :: inclined(${o.debrief.inclined})}"></span>
+                        </th:block>
+                        <span th:if="${o.debrief != null and !o.debrief.completed}" class="small"
+                              th:text="${@fmt.dateTime(o.debrief.scheduledAt)}">date</span>
+                        <span th:if="${o.debriefLate}" class="badge text-bg-danger">late</span>
+                    </td>
+                    <td class="small">
+                        <span th:if="${o.readyToContact}" class="badge text-bg-success">Tell the candidate the outcome</span>
+                        <span th:if="${o.feedbackLate}" class="badge text-bg-danger">Chase feedback</span>
+                        <span th:if="${o.debriefDue and o.debrief == null}" class="badge text-bg-warning">Schedule the debrief</span>
+                        <span th:if="${o.debriefDue and o.debrief != null}" class="badge text-bg-warning">Hold the debrief</span>
+                        <span th:if="${a.status.value != 'ACTIVE'}" class="text-muted">Closed</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">Upcoming interviews</div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item text-muted" th:if="${upcoming.isEmpty()}">None scheduled.</li>
+                    <li class="list-group-item d-flex justify-content-between" th:each="i : ${upcoming}">
+                        <div>
+                            <a th:href="@{/interviews/{id}(id=${i.id})}" th:text="${i.candidateName}">Adam</a>
+                            <span class="small text-muted" th:text="'· ' + ${i.interviewTypeName} + ' with ' + ${i.interviewerName}">· type</span>
+                        </div>
+                        <span class="small" th:text="${@fmt.dateTime(i.scheduledAt)}">date</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">Upcoming debriefs</div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item text-muted" th:if="${debriefs.isEmpty()}">None scheduled.</li>
+                    <li class="list-group-item d-flex justify-content-between" th:each="d : ${debriefs}">
+                        <a th:href="@{/applications/{id}(id=${d.applicationId})}" th:text="${d.candidateName} + ' · ' + ${d.funnelName}">Adam</a>
+                        <span class="small" th:text="${@fmt.dateTime(d.scheduledAt)}">date</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+<script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>

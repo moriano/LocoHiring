@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Candidates')}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<main class="container pb-5">
+    <div th:replace="~{layout :: flash}"></div>
+    <h1 class="h3 mb-4">Candidates</h1>
+    <div class="row g-4">
+        <div th:class="${positions != null} ? 'col-lg-8' : 'col-12'">
+            <div class="card">
+                <div class="card-header">Candidates you can see</div>
+                <table class="table table-hover mb-0">
+                    <thead class="table-light"><tr><th>Name</th><th>Email</th><th>Position</th><th>Resume</th></tr></thead>
+                    <tbody>
+                    <tr th:if="${candidates.isEmpty()}"><td colspan="4" class="text-muted">No candidates.</td></tr>
+                    <tr th:each="c : ${candidates}">
+                        <td><a class="fw-semibold" th:href="@{/candidates/{id}(id=${c.id})}"
+                               th:text="${c.firstName} + ' ' + ${c.surname ?: ''}">Adam</a></td>
+                        <td th:text="${c.email}">adam@candidates.com</td>
+                        <td th:text="${c.positionName}">Position</td>
+                        <td><span th:if="${c.hasResume}" class="badge text-bg-light border">on file</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="small text-muted mt-2" th:if="${me.recruiter() and !me.admin()}">
+                You see the candidates you own and those nobody has put in a funnel yet.</p>
+        </div>
+        <div class="col-lg-4" th:if="${positions != null}">
+            <div class="card">
+                <div class="card-header">Register a candidate</div>
+                <form class="card-body" method="post" th:action="@{/candidates}">
+                    <div class="mb-3">
+                        <label class="form-label" for="firstName">First name</label>
+                        <input class="form-control" id="firstName" name="firstName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="surname">Surname</label>
+                        <input class="form-control" id="surname" name="surname">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="email">Email</label>
+                        <input class="form-control" id="email" name="email" type="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="positionId">Position</label>
+                        <select class="form-select" id="positionId" name="positionId" required>
+                            <option th:each="p : ${positions}" th:value="${p.id}" th:text="${p.name}">Position</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-dark w-100" type="submit">Register</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+<script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>

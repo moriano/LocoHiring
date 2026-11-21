@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Catalog')}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<main class="container pb-5">
+    <div th:replace="~{layout :: flash}"></div>
+    <h1 class="h3 mb-4">Catalog</h1>
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">Job families</div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item" th:each="f : ${jobFamilies}" th:text="${f.name}">Software Engineer</li>
+                </ul>
+                <form class="card-body d-flex gap-2" method="post" th:action="@{/catalog/job-families}">
+                    <input class="form-control" name="name" required placeholder="New job family">
+                    <button class="btn btn-dark" type="submit">Add</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">Positions</div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item" th:each="p : ${positions}">
+                        <span th:text="${p.name}">Position</span>
+                        <div class="small text-muted" th:text="${p.jobFamilyName} + ', level ' + ${p.level}">family</div>
+                    </li>
+                </ul>
+                <form class="card-body" method="post" th:action="@{/catalog/positions}">
+                    <input class="form-control mb-2" name="name" required placeholder="New position name">
+                    <input class="form-control mb-2" name="description" placeholder="Description">
+                    <div class="d-flex gap-2">
+                        <select class="form-select" name="jobFamilyId">
+                            <option th:each="f : ${jobFamilies}" th:value="${f.id}" th:text="${f.name}">family</option>
+                        </select>
+                        <input class="form-control" style="max-width: 6rem" type="number" min="1" name="level" required placeholder="Level">
+                        <button class="btn btn-dark" type="submit">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">Interview types</div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item" th:each="t : ${interviewTypes}">
+                        <span th:text="${t.name}">Phone Screen</span>
+                        <div class="small text-muted" th:text="${t.description}">description</div>
+                    </li>
+                </ul>
+                <form class="card-body" method="post" th:action="@{/catalog/interview-types}">
+                    <input class="form-control mb-2" name="name" required placeholder="New interview type">
+                    <div class="d-flex gap-2">
+                        <input class="form-control" name="description" placeholder="Description">
+                        <button class="btn btn-dark" type="submit">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+<script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>

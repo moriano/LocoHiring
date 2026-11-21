@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · LocoHiring'">LocoHiring</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<nav th:fragment="nav" class="navbar navbar-expand-xl navbar-dark bg-dark mb-4">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand fw-bold" th:href="@{/}">Loco<span class="text-warning">Hiring</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav me-auto">
+                <th:block th:if="${me.seesRecruiterPages()}">
+                    <li class="nav-item"><a class="nav-link" th:href="@{/recruiter}">My candidates</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/candidates}">Candidates</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/funnels}">Funnels</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/find-interviewers}">Find interviewers</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/catalog}">Catalog</a></li>
+                </th:block>
+                <th:block th:if="${me.seesInterviewerPages()}">
+                    <li class="nav-item" th:if="${me.admin()}"><span class="nav-link disabled">|</span></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/interviewer}">My interviews</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/calendar}">Calendar</a></li>
+                </th:block>
+                <li class="nav-item" th:if="${me.admin()}"><a class="nav-link" th:href="@{/admin/users}">Users</a></li>
+                <li class="nav-item" th:if="${me.admin()}"><a class="nav-link" th:href="@{/admin/events}">Audit log</a></li>
+            </ul>
+            <span class="navbar-text me-3 text-nowrap">
+                <span th:text="${me.name()}">Name</span>
+                <span class="badge text-bg-warning ms-1" th:if="${me.admin()}">admin</span>
+                <span class="badge text-bg-secondary ms-1" th:unless="${me.admin()}" th:text="${me.recruiter()} ? 'recruiter' : 'interviewer'">role</span>
+            </span>
+            <form th:action="@{/logout}" method="post" class="d-flex">
+                <button class="btn btn-outline-light btn-sm" type="submit">Log out</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div th:fragment="flash">
+    <div class="alert alert-success alert-dismissible" th:if="${success}">
+        <span th:text="${success}">Done</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible" th:if="${error}">
+        <span th:text="${error}">Error</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+
+<span th:fragment="interviewStatus(s)" class="badge"
+      th:classappend="${s.value == 'SCHEDULED'} ? 'text-bg-primary' : (${s.value == 'COMPLETED'} ? 'text-bg-success' : (${s.value == 'CANCELLED'} ? 'text-bg-secondary' : 'text-bg-warning'))"
+      th:text="${#strings.replace(s.value, '_', ' ')}">STATUS</span>
+
+<span th:fragment="applicationStatus(s)" class="badge"
+      th:classappend="${s.value == 'ACTIVE'} ? 'text-bg-primary' : (${s.value == 'HIRED'} ? 'text-bg-success' : (${s.value == 'REJECTED'} ? 'text-bg-danger' : 'text-bg-secondary'))"
+      th:text="${s.value}">STATUS</span>
+
+<span th:fragment="inclined(value)" class="badge"
+      th:classappend="${value} ? 'text-bg-success' : 'text-bg-danger'"
+      th:text="${value} ? 'Inclined' : 'Not inclined'">Inclined</span>
+
+<script th:fragment="scripts" th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

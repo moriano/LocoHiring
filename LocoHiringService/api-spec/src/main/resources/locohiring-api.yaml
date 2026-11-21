@@ -1,0 +1,1431 @@
+openapi: 3.0.3
+info:
+  title: LocoHiring API
+  version: 1.0.0
+  description: |
+    REST API of LocoHiring. Authenticate with `POST /auth/login` and send the access token as
+    `Authorization: Bearer <token>`. Access tokens expire after 5 minutes; use `POST /auth/refresh`
+    with the refresh token to get a new pair.
+
+    All times are ISO-8601 date-times. Availability dates and hours are in the service's time zone
+    (Australia/Sydney by default). Interviews last one hour and start on the hour.
+servers:
+  - url: /
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Me
+    description: Dashboards for the logged-in user
+  - name: JobFamilies
+  - name: Positions
+  - name: InterviewTypes
+  - name: Funnels
+  - name: Candidates
+  - name: Applications
+    description: A candidate going through a funnel
+  - name: Interviews
+  - name: Availability
+  - name: Interviewers
+  - name: Recruiters
+  - name: Events
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Tokens for the user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refresh
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshRequest' }
+      responses:
+        '200':
+          description: A new pair of tokens
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me:
+    get:
+      tags: [Me]
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: The logged-in user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CurrentUser' }
+  /me/interviews:
+    get:
+      tags: [Me]
+      operationId: listMyUpcomingInterviews
+      description: Upcoming interviews where the logged-in interviewer is the interviewer or the shadow.
+      responses:
+        '200':
+          description: Upcoming interviews, soonest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Interview' }
+  /me/pending-feedback:
+    get:
+      tags: [Me]
+      operationId: listMyPendingFeedback
+      description: Past interviews of the logged-in interviewer that still need their feedback.
+      responses:
+        '200':
+          description: Pending feedback, oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PendingFeedback' }
+  /me/debriefs:
+    get:
+      tags: [Me]
+      operationId: listMyUpcomingDebriefs
+      description: Upcoming debriefs the logged-in user attends (interviewers of the application and its recruiter).
+      responses:
+        '200':
+          description: Upcoming debriefs, soonest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Debrief' }
+
+  /job-families:
+    get:
+      tags: [JobFamilies]
+      operationId: listJobFamilies
+      responses:
+        '200':
+          description: All job families
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/JobFamily' }
+    post:
+      tags: [JobFamilies]
+      operationId: createJobFamily
+      description: Recruiters and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/JobFamilyCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JobFamily' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /positions:
+    get:
+      tags: [Positions]
+      operationId: listPositions
+      responses:
+        '200':
+          description: All positions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Position' }
+    post:
+      tags: [Positions]
+      operationId: createPosition
+      description: Recruiters and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PositionCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Position' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /interview-types:
+    get:
+      tags: [InterviewTypes]
+      operationId: listInterviewTypes
+      responses:
+        '200':
+          description: All interview types
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/InterviewType' }
+    post:
+      tags: [InterviewTypes]
+      operationId: createInterviewType
+      description: Recruiters and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InterviewTypeCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InterviewType' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /funnels:
+    get:
+      tags: [Funnels]
+      operationId: listFunnels
+      description: Recruiters and admins only.
+      responses:
+        '200':
+          description: All funnels
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Funnel' }
+    post:
+      tags: [Funnels]
+      operationId: createFunnel
+      description: Recruiters and admins only. The interviews of the funnel follow the order of interviewTypeIds.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FunnelCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Funnel' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /funnels/{funnelId}:
+    parameters:
+      - $ref: '#/components/parameters/FunnelId'
+    get:
+      tags: [Funnels]
+      operationId: getFunnel
+      responses:
+        '200':
+          description: The funnel
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Funnel' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /candidates:
+    get:
+      tags: [Candidates]
+      operationId: listCandidates
+      description: |
+        Candidates the caller may see. Admins see all. Recruiters see the candidates of their applications plus
+        candidates without any application yet (so they can create one). Interviewers see the candidates they
+        interview.
+      responses:
+        '200':
+          description: Visible candidates
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Candidate' }
+    post:
+      tags: [Candidates]
+      operationId: createCandidate
+      description: Recruiters and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CandidateCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Candidate' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /candidates/{candidateId}:
+    parameters:
+      - $ref: '#/components/parameters/CandidateId'
+    get:
+      tags: [Candidates]
+      operationId: getCandidate
+      responses:
+        '200':
+          description: The candidate
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Candidate' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /candidates/{candidateId}/applications:
+    parameters:
+      - $ref: '#/components/parameters/CandidateId'
+    get:
+      tags: [Candidates]
+      operationId: listCandidateApplications
+      description: The applications of the candidate that the caller may see.
+      responses:
+        '200':
+          description: Applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Application' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /candidates/{candidateId}/resume:
+    parameters:
+      - $ref: '#/components/parameters/CandidateId'
+    get:
+      tags: [Candidates]
+      operationId: getResume
+      responses:
+        '200':
+          description: The resume
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Resume' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Candidates]
+      operationId: uploadResume
+      description: Recruiters and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Resume' }
+      responses:
+        '204':
+          description: Stored
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /applications:
+    get:
+      tags: [Applications]
+      operationId: listApplications
+      description: |
+        Recruiter landing page data. Recruiters get the applications they own, admins get all of them, each with
+        the flags that tell whether the recruiter has to act. Interviewers get the applications they take part in.
+      responses:
+        '200':
+          description: Applications with their status flags
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ApplicationOverview' }
+    post:
+      tags: [Applications]
+      operationId: createApplication
+      description: Puts a candidate through a funnel. Recruiters and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApplicationCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Application' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /applications/{applicationId}:
+    parameters:
+      - $ref: '#/components/parameters/ApplicationId'
+    get:
+      tags: [Applications]
+      operationId: getApplication
+      responses:
+        '200':
+          description: The application with its candidate, interviews and debrief
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApplicationDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /applications/{applicationId}/status:
+    parameters:
+      - $ref: '#/components/parameters/ApplicationId'
+    put:
+      tags: [Applications]
+      operationId: updateApplicationStatus
+      description: Records the outcome (HIRED, REJECTED, CANCELLED). Owning recruiter and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApplicationStatusUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Application' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /applications/{applicationId}/interviews:
+    parameters:
+      - $ref: '#/components/parameters/ApplicationId'
+    post:
+      tags: [Applications]
+      operationId: createInterview
+      description: |
+        Creates an interview at the given time with no interviewer yet (LOOKING_FOR_INTERVIEWER). The interview
+        type must be part of the application's funnel. Owning recruiter and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InterviewCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interview' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /applications/{applicationId}/interviewer-availability:
+    parameters:
+      - $ref: '#/components/parameters/ApplicationId'
+    get:
+      tags: [Applications]
+      operationId: listEligibleAvailability
+      description: |
+        Upcoming free one-hour slots between from and to (inclusive) in which at least one interviewer could lead
+        an interview of this candidate: active, at least the position's level, and in the position's job family.
+        Use it to offer times to the candidate before booking. Recruiters and admins only.
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Slots ordered by time
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AvailabilitySlot' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /applications/{applicationId}/feedback:
+    parameters:
+      - $ref: '#/components/parameters/ApplicationId'
+    get:
+      tags: [Applications]
+      operationId: listApplicationFeedback
+      description: |
+        Feedback of every interview of the application. An interviewer only sees other interviewers' feedback once
+        they have written feedback for every interview of this application they take part in; until then the
+        response only contains their own feedback and hiddenCount says how many were withheld.
+      responses:
+        '200':
+          description: Visible feedback
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FeedbackList' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /applications/{applicationId}/events:
+    parameters:
+      - $ref: '#/components/parameters/ApplicationId'
+    get:
+      tags: [Applications]
+      operationId: listApplicationEvents
+      responses:
+        '200':
+          description: Audit events of the application, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Event' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /applications/{applicationId}/debrief:
+    parameters:
+      - $ref: '#/components/parameters/ApplicationId'
+    post:
+      tags: [Applications]
+      operationId: createDebrief
+      description: Schedules the debrief of the application. Owning recruiter and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DebriefCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Debrief' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    put:
+      tags: [Applications]
+      operationId: updateDebrief
+      description: Reschedules the debrief or records its notes and decision. Owning recruiter and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DebriefUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Debrief' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /interviews/{interviewId}:
+    parameters:
+      - $ref: '#/components/parameters/InterviewId'
+    get:
+      tags: [Interviews]
+      operationId: getInterview
+      responses:
+        '200':
+          description: The interview
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interview' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /interviews/{interviewId}/schedule:
+    parameters:
+      - $ref: '#/components/parameters/InterviewId'
+    put:
+      tags: [Interviews]
+      operationId: rescheduleInterview
+      description: |
+        Moves the interview to a new time. Interviewers who have a free availability block at the new time stay
+        assigned; the others are removed, and the interview goes back to LOOKING_FOR_INTERVIEWER if it loses its
+        main interviewer. Owning recruiter and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InterviewSchedule' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interview' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /interviews/{interviewId}/assignment:
+    parameters:
+      - $ref: '#/components/parameters/InterviewId'
+    put:
+      tags: [Interviews]
+      operationId: assignInterviewers
+      description: |
+        Assigns the main interviewer and optionally a shadow, replacing any previous assignment. Both need a free
+        availability block at the interview time. The main interviewer must belong to the position's job family
+        and be at least the position's level. Owning recruiter and admins only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InterviewAssignment' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interview' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Interviews]
+      operationId: unassignInterviewers
+      description: Removes the interviewer and shadow and frees their availability blocks.
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interview' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /interviews/{interviewId}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/InterviewId'
+    post:
+      tags: [Interviews]
+      operationId: cancelInterview
+      description: Cancels the interview and frees the availability blocks. Owning recruiter and admins only.
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interview' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /interviews/{interviewId}/complete:
+    parameters:
+      - $ref: '#/components/parameters/InterviewId'
+    post:
+      tags: [Interviews]
+      operationId: completeInterview
+      description: |
+        Marks a past, scheduled interview as COMPLETED. Submitting feedback also does this. Owning recruiter and
+        admins only.
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interview' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /interviews/{interviewId}/feedback:
+    parameters:
+      - $ref: '#/components/parameters/InterviewId'
+    post:
+      tags: [Interviews]
+      operationId: submitFeedback
+      description: |
+        Feedback of the logged-in interviewer (main interviewer or shadow) for an interview that has taken place.
+        Each interviewer submits it once. Marks the interview as COMPLETED.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FeedbackCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Feedback' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /availability:
+    get:
+      tags: [Availability]
+      operationId: listAvailability
+      description: |
+        Availability blocks of the logged-in interviewer between from and to (inclusive), with the interview booked
+        on each. Admins may pass interviewerId to see another interviewer's blocks.
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: interviewerId
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: Blocks ordered by date and hour
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AvailabilityBlock' }
+    post:
+      tags: [Availability]
+      operationId: createAvailability
+      description: |
+        Adds one-hour blocks from startHour to endHour on date, repeated every week for `weeks` weeks (1 means a
+        one-off). Blocks that already exist are skipped. Interviewers only (admins may pass interviewerId).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AvailabilityCreate' }
+      responses:
+        '201':
+          description: The blocks that were created
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AvailabilityBlock' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /availability/{availabilityId}:
+    parameters:
+      - name: availabilityId
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    delete:
+      tags: [Availability]
+      operationId: deleteAvailability
+      description: Deletes a block that has no interview booked.
+      responses:
+        '204':
+          description: Deleted
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /interviewers:
+    get:
+      tags: [Interviewers]
+      operationId: listInterviewers
+      description: Recruiters and admins only.
+      responses:
+        '200':
+          description: All interviewers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Interviewer' }
+    post:
+      tags: [Interviewers]
+      operationId: createInterviewer
+      description: Admins only. The email must not be used by another recruiter or interviewer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InterviewerCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interviewer' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /interviewers/{interviewerId}:
+    parameters:
+      - name: interviewerId
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      tags: [Interviewers]
+      operationId: updateInterviewer
+      description: |
+        Admins only. Replaces the interviewer's details; the password changes only when one is given. Deactivated
+        interviewers cannot log in or be assigned to interviews; their existing interviews keep them until a
+        recruiter reassigns them. Admins cannot deactivate themselves or remove their own admin flag.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InterviewerUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interviewer' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /interviewers/available:
+    get:
+      tags: [Interviewers]
+      operationId: findAvailableInterviewers
+      description: |
+        Interviewers with a free availability block at scheduledAt (which must be on the hour). With interviewId,
+        each result says whether the interviewer may be the main interviewer of that interview. Recruiters and
+        admins only.
+      parameters:
+        - name: scheduledAt
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - name: interviewId
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: Available interviewers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AvailableInterviewer' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /recruiters:
+    get:
+      tags: [Recruiters]
+      operationId: listRecruiters
+      description: Admins only.
+      responses:
+        '200':
+          description: All recruiters
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Recruiter' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Recruiters]
+      operationId: createRecruiter
+      description: Admins only. The email must not be used by another recruiter or interviewer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecruiterCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Recruiter' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /recruiters/{recruiterId}:
+    parameters:
+      - name: recruiterId
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      tags: [Recruiters]
+      operationId: updateRecruiter
+      description: |
+        Admins only. Replaces the recruiter's details; the password changes only when one is given. Deactivated
+        recruiters cannot log in. Admins cannot deactivate themselves or remove their own admin flag.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecruiterUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Recruiter' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /events:
+    get:
+      tags: [Events]
+      operationId: listEvents
+      description: The whole audit log, newest first. Admins only.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 1000, default: 200 }
+      responses:
+        '200':
+          description: Events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Event' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    FunnelId:
+      name: funnelId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+    CandidateId:
+      name: candidateId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+    ApplicationId:
+      name: applicationId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+    InterviewId:
+      name: interviewId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+  responses:
+    BadRequest:
+      description: The request is invalid
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    Forbidden:
+      description: The caller may not do this
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    NotFound:
+      description: Not found, or not visible to the caller
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    Conflict:
+      description: Conflicts with existing data
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+
+  schemas:
+    ApiError:
+      type: object
+      required: [status, message]
+      properties:
+        status: { type: integer }
+        message: { type: string }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string }
+        password: { type: string }
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string }
+    TokenResponse:
+      type: object
+      required: [accessToken, refreshToken, expiresIn, user]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresIn:
+          type: integer
+          description: Seconds until the access token expires
+        user: { $ref: '#/components/schemas/CurrentUser' }
+    UserType:
+      type: string
+      enum: [RECRUITER, INTERVIEWER]
+    CurrentUser:
+      type: object
+      required: [id, email, firstName, type, admin]
+      properties:
+        id: { type: integer, format: int64 }
+        email: { type: string }
+        firstName: { type: string }
+        surname: { type: string }
+        type: { $ref: '#/components/schemas/UserType' }
+        admin: { type: boolean }
+
+    JobFamily:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+    JobFamilyCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1 }
+
+    Position:
+      type: object
+      required: [id, name, level, jobFamilyId]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        description: { type: string }
+        level: { type: integer }
+        jobFamilyId: { type: integer, format: int64 }
+        jobFamilyName: { type: string }
+    PositionCreate:
+      type: object
+      required: [name, level, jobFamilyId]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        level: { type: integer, minimum: 1 }
+        jobFamilyId: { type: integer, format: int64 }
+
+    InterviewType:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        description: { type: string }
+    InterviewTypeCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+
+    Funnel:
+      type: object
+      required: [id, name, recruiterId, interviewTypes]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        description: { type: string }
+        recruiterId: { type: integer, format: int64 }
+        recruiterName: { type: string }
+        interviewTypes:
+          type: array
+          items: { $ref: '#/components/schemas/InterviewType' }
+    FunnelCreate:
+      type: object
+      required: [name, interviewTypeIds]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        interviewTypeIds:
+          type: array
+          minItems: 1
+          items: { type: integer, format: int64 }
+
+    Interviewer:
+      type: object
+      required: [id, email, firstName, level, barRaiser, jobFamilies]
+      properties:
+        id: { type: integer, format: int64 }
+        email: { type: string }
+        firstName: { type: string }
+        surname: { type: string }
+        level: { type: integer }
+        barRaiser: { type: boolean }
+        admin: { type: boolean }
+        active: { type: boolean }
+        jobFamilies:
+          type: array
+          items: { $ref: '#/components/schemas/JobFamily' }
+    InterviewerCreate:
+      type: object
+      required: [email, firstName, password, level, jobFamilyIds]
+      properties:
+        email: { type: string, minLength: 3 }
+        firstName: { type: string, minLength: 1 }
+        surname: { type: string }
+        password:
+          type: string
+          minLength: 8
+          description: Stored as a bcrypt hash
+        level: { type: integer, minimum: 1 }
+        barRaiser: { type: boolean, default: false }
+        admin: { type: boolean, default: false }
+        jobFamilyIds:
+          type: array
+          description: Job families the interviewer can interview for
+          items: { type: integer, format: int64 }
+    Recruiter:
+      type: object
+      required: [id, email, firstName, admin, active]
+      properties:
+        id: { type: integer, format: int64 }
+        email: { type: string }
+        firstName: { type: string }
+        surname: { type: string }
+        admin: { type: boolean }
+        active: { type: boolean }
+    RecruiterUpdate:
+      type: object
+      required: [email, firstName, admin, active]
+      properties:
+        email: { type: string, minLength: 3 }
+        firstName: { type: string, minLength: 1 }
+        surname: { type: string }
+        admin: { type: boolean }
+        active: { type: boolean }
+        password:
+          type: string
+          minLength: 8
+          description: New password; leave out to keep the current one
+    InterviewerUpdate:
+      type: object
+      required: [email, firstName, level, barRaiser, admin, active, jobFamilyIds]
+      properties:
+        email: { type: string, minLength: 3 }
+        firstName: { type: string, minLength: 1 }
+        surname: { type: string }
+        level: { type: integer, minimum: 1 }
+        barRaiser: { type: boolean }
+        admin: { type: boolean }
+        active: { type: boolean }
+        jobFamilyIds:
+          type: array
+          items: { type: integer, format: int64 }
+        password:
+          type: string
+          minLength: 8
+          description: New password; leave out to keep the current one
+    RecruiterCreate:
+      type: object
+      required: [email, firstName, password]
+      properties:
+        email: { type: string, minLength: 3 }
+        firstName: { type: string, minLength: 1 }
+        surname: { type: string }
+        password:
+          type: string
+          minLength: 8
+          description: Stored as a bcrypt hash
+        admin: { type: boolean, default: false }
+    AvailabilitySlot:
+      type: object
+      required: [date, startHour, scheduledAt, interviewers]
+      properties:
+        date: { type: string, format: date }
+        startHour: { type: integer }
+        scheduledAt:
+          type: string
+          format: date-time
+          description: The interview start for this slot
+        interviewers:
+          type: array
+          description: Interviewers free at this time who could lead the interview
+          items: { $ref: '#/components/schemas/Interviewer' }
+    AvailableInterviewer:
+      type: object
+      required: [interviewer, availabilityId]
+      properties:
+        interviewer: { $ref: '#/components/schemas/Interviewer' }
+        availabilityId: { type: integer, format: int64 }
+        eligibleAsMain:
+          type: boolean
+          description: Present when interviewId was given
+        ineligibleReason: { type: string }
+
+    Candidate:
+      type: object
+      required: [id, email, firstName, positionId, hasResume]
+      properties:
+        id: { type: integer, format: int64 }
+        email: { type: string }
+        firstName: { type: string }
+        surname: { type: string }
+        positionId: { type: integer, format: int64 }
+        positionName: { type: string }
+        positionLevel: { type: integer }
+        jobFamilyName: { type: string }
+        hasResume: { type: boolean }
+    CandidateCreate:
+      type: object
+      required: [email, firstName, positionId]
+      properties:
+        email: { type: string, minLength: 3 }
+        firstName: { type: string, minLength: 1 }
+        surname: { type: string }
+        positionId: { type: integer, format: int64 }
+    Resume:
+      type: object
+      required: [filename, contentType, content]
+      properties:
+        filename: { type: string, minLength: 1 }
+        contentType: { type: string, minLength: 1 }
+        content:
+          type: string
+          format: byte
+          description: The file, base64 encoded
+
+    ApplicationStatus:
+      type: string
+      enum: [ACTIVE, HIRED, REJECTED, CANCELLED]
+    Application:
+      type: object
+      required: [id, candidateId, funnelId, recruiterId, status, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        candidateId: { type: integer, format: int64 }
+        candidateName: { type: string }
+        funnelId: { type: integer, format: int64 }
+        funnelName: { type: string }
+        recruiterId: { type: integer, format: int64 }
+        recruiterName: { type: string }
+        status: { $ref: '#/components/schemas/ApplicationStatus' }
+        createdAt: { type: string, format: date-time }
+    ApplicationCreate:
+      type: object
+      required: [candidateId, funnelId]
+      properties:
+        candidateId: { type: integer, format: int64 }
+        funnelId: { type: integer, format: int64 }
+        recruiterId:
+          type: integer
+          format: int64
+          description: Owner of the application. Defaults to the calling recruiter; required when an admin interviewer calls.
+    ApplicationStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: '#/components/schemas/ApplicationStatus' }
+    ApplicationOverview:
+      type: object
+      required: [application, totalInterviews, completedInterviews, interviewsToSchedule, pendingFeedback,
+                 feedbackLate, debriefDue, debriefLate, readyToContact]
+      properties:
+        application: { $ref: '#/components/schemas/Application' }
+        totalInterviews:
+          type: integer
+          description: Interviews of the funnel
+        completedInterviews: { type: integer }
+        interviewsToSchedule:
+          type: integer
+          description: Funnel interviews not created yet, plus interviews still looking for an interviewer
+        pendingFeedback:
+          type: integer
+          description: Feedback missing for interviews that already took place
+        feedbackLate:
+          type: boolean
+          description: Some feedback is more than 24 hours overdue
+        debrief: { $ref: '#/components/schemas/Debrief' }
+        debriefDue:
+          type: boolean
+          description: All funnel interviews are completed with feedback and the debrief is not completed
+        debriefLate:
+          type: boolean
+          description: The debrief is not completed 7 days after the last interview
+        readyToContact:
+          type: boolean
+          description: The debrief is completed but the application is still ACTIVE, so the candidate must be told the outcome
+    ApplicationDetail:
+      type: object
+      required: [application, candidate, funnel, interviews]
+      properties:
+        application: { $ref: '#/components/schemas/Application' }
+        candidate: { $ref: '#/components/schemas/Candidate' }
+        funnel: { $ref: '#/components/schemas/Funnel' }
+        interviews:
+          type: array
+          items: { $ref: '#/components/schemas/Interview' }
+        debrief: { $ref: '#/components/schemas/Debrief' }
+
+    InterviewStatus:
+      type: string
+      enum: [LOOKING_FOR_INTERVIEWER, SCHEDULED, COMPLETED, CANCELLED]
+    Interview:
+      type: object
+      required: [id, applicationId, interviewTypeId, status, scheduledAt]
+      properties:
+        id: { type: integer, format: int64 }
+        applicationId: { type: integer, format: int64 }
+        candidateId: { type: integer, format: int64 }
+        candidateName: { type: string }
+        positionName: { type: string }
+        interviewTypeId: { type: integer, format: int64 }
+        interviewTypeName: { type: string }
+        interviewerId: { type: integer, format: int64 }
+        interviewerName: { type: string }
+        shadowId: { type: integer, format: int64 }
+        shadowName: { type: string }
+        status: { $ref: '#/components/schemas/InterviewStatus' }
+        scheduledAt: { type: string, format: date-time }
+    InterviewCreate:
+      type: object
+      required: [interviewTypeId, scheduledAt]
+      properties:
+        interviewTypeId: { type: integer, format: int64 }
+        scheduledAt: { type: string, format: date-time }
+    InterviewSchedule:
+      type: object
+      required: [scheduledAt]
+      properties:
+        scheduledAt: { type: string, format: date-time }
+    InterviewAssignment:
+      type: object
+      required: [interviewerId]
+      properties:
+        interviewerId: { type: integer, format: int64 }
+        shadowId: { type: integer, format: int64 }
+
+    Feedback:
+      type: object
+      required: [id, interviewId, interviewerId, feedback, inclined, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        interviewId: { type: integer, format: int64 }
+        interviewTypeName: { type: string }
+        interviewerId: { type: integer, format: int64 }
+        interviewerName: { type: string }
+        feedback: { type: string }
+        inclined: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    FeedbackCreate:
+      type: object
+      required: [feedback, inclined]
+      properties:
+        feedback: { type: string, minLength: 1 }
+        inclined: { type: boolean }
+    FeedbackList:
+      type: object
+      required: [feedback, hiddenCount]
+      properties:
+        feedback:
+          type: array
+          items: { $ref: '#/components/schemas/Feedback' }
+        hiddenCount:
+          type: integer
+          description: Feedback withheld until the caller writes their own
+    PendingFeedback:
+      type: object
+      required: [interview, dueAt, late]
+      properties:
+        interview: { $ref: '#/components/schemas/Interview' }
+        dueAt: { type: string, format: date-time }
+        late: { type: boolean }
+
+    Debrief:
+      type: object
+      required: [id, applicationId, scheduledAt, completed, late]
+      properties:
+        id: { type: integer, format: int64 }
+        applicationId: { type: integer, format: int64 }
+        candidateName: { type: string }
+        funnelName: { type: string }
+        scheduledAt: { type: string, format: date-time }
+        notes: { type: string }
+        inclined: { type: boolean }
+        completed:
+          type: boolean
+          description: Notes and decision are recorded
+        dueAt:
+          type: string
+          format: date-time
+          description: 7 days after the last interview, when there is one
+        late: { type: boolean }
+    DebriefCreate:
+      type: object
+      required: [scheduledAt]
+      properties:
+        scheduledAt: { type: string, format: date-time }
+    DebriefUpdate:
+      type: object
+      properties:
+        scheduledAt: { type: string, format: date-time }
+        notes: { type: string }
+        inclined: { type: boolean }
+
+    AvailabilityBlock:
+      type: object
+      required: [id, interviewerId, date, startHour, endHour]
+      properties:
+        id: { type: integer, format: int64 }
+        interviewerId: { type: integer, format: int64 }
+        date: { type: string, format: date }
+        startHour: { type: integer }
+        endHour: { type: integer }
+        interviewId: { type: integer, format: int64 }
+        candidateName: { type: string }
+        interviewTypeName: { type: string }
+    AvailabilityCreate:
+      type: object
+      required: [date, startHour, endHour]
+      properties:
+        date: { type: string, format: date }
+        startHour: { type: integer, minimum: 0, maximum: 23 }
+        endHour: { type: integer, minimum: 1, maximum: 24 }
+        weeks:
+          type: integer
+          minimum: 1
+          maximum: 52
+          default: 1
+        interviewerId:
+          type: integer
+          format: int64
+          description: Admins only; defaults to the logged-in interviewer
+
+    Event:
+      type: object
+      required: [id, email, timestamp, message]
+      properties:
+        id: { type: integer, format: int64 }
+        funnelId: { type: integer, format: int64 }
+        applicationId: { type: integer, format: int64 }
+        email: { type: string }
+        timestamp: { type: string, format: date-time }
+        message: { type: string }

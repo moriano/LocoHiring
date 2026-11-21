@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Error')}"></head>
+<body>
+<th:block th:if="${me != null}"><nav th:replace="~{layout :: nav}"></nav></th:block>
+<main class="container py-5">
+    <div class="card p-4">
+        <h1 class="h4" th:text="${status == 404} ? 'Not found' : (${status == 403} ? 'Not allowed' : 'Something went wrong')">Error</h1>
+        <p class="text-muted mb-3" th:text="${message} ?: 'The page could not be loaded.'">Message</p>
+        <div><a class="btn btn-outline-dark" th:href="@{/}">Back to the start</a></div>
+    </div>
+</main>
+<script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>

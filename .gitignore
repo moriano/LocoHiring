@@ -1,0 +1,4 @@
+target/
+# IntelliJ regenerates these from the Maven POMs.
+.idea/
+*.iml

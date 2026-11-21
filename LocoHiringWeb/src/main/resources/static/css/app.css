@@ -1,0 +1,38 @@
+body {
+    background: #f5f6f8;
+}
+
+.card {
+    border: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+}
+
+.card-header {
+    background: #fff;
+    font-weight: 600;
+}
+
+.login-card {
+    max-width: 380px;
+}
+
+.slot {
+    min-width: 7.5rem;
+}
+
+.feedback-text {
+    white-space: pre-wrap;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+h1 .badge {
+    font-size: .45em;
+    vertical-align: middle;
+}
+
+.navbar .nav-link, .navbar .btn {
+    white-space: nowrap;
+}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(${interview.interviewTypeName} + ' · ' + ${interview.candidateName})}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<main class="container pb-5" th:with="i=${interview}, c=${detail.candidate}">
+    <div th:replace="~{layout :: flash}"></div>
+    <div class="mb-4">
+        <a class="small" th:href="@{/applications/{id}(id=${i.applicationId})}" th:text="'← ' + ${i.candidateName} + ' · ' + ${detail.funnel.name}">back</a>
+        <h1 class="h3 mt-1 mb-1">
+            <span th:text="${i.interviewTypeName}">Phone Screen</span> with <span th:text="${i.candidateName}">Adam</span>
+            <span th:replace="~{layout :: interviewStatus(${i.status})}"></span>
+        </h1>
+        <div class="text-muted">
+            <span th:text="${@fmt.dateTime(i.scheduledAt)}">date</span> (1 hour) ·
+            <span th:text="${i.positionName}">Position</span> (level <span th:text="${c.positionLevel}">5</span>)
+            <span th:if="${c.hasResume}"> · <a th:href="@{/candidates/{id}/resume(id=${c.id})}">resume</a></span>
+        </div>
+        <div class="mt-1">
+            Interviewer: <strong th:text="${i.interviewerName} ?: 'not assigned yet'">Peter</strong>
+            <span th:if="${i.shadowName != null}"> · shadow: <strong th:text="${i.shadowName}">Nathan</strong></span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card mb-4" th:if="${canWriteFeedback}">
+                <div class="card-header">Your feedback</div>
+                <form class="card-body" method="post" th:action="@{/interviews/{id}/feedback(id=${i.id})}">
+                    <p class="small text-muted">Other interviewers' feedback stays hidden from you until you write yours,
+                        so that it does not bias you.</p>
+                    <textarea class="form-control mb-3" name="feedback" rows="8" required
+                              placeholder="What did you observe? What went well and what did not?"></textarea>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success flex-fill" name="inclined" value="true">Submit · inclined to proceed</button>
+                        <button class="btn btn-danger flex-fill" name="inclined" value="false">Submit · not inclined</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card mb-4" th:if="${available != null}">
+                <div class="card-header">Interviewers available at this time</div>
+                <div class="card-body" th:if="${available.isEmpty()}">
+                    <p class="text-muted mb-0">Nobody has a free availability block at this time. Try another time below.</p>
+                </div>
+                <th:block th:unless="${available.isEmpty()}">
+                    <table class="table mb-0">
+                        <thead class="table-light"><tr><th>Interviewer</th><th>Level</th><th>Can lead?</th></tr></thead>
+                        <tbody>
+                        <tr th:each="av : ${available}">
+                            <td th:text="${av.interviewer.firstName}">Peter</td>
+                            <td th:text="${av.interviewer.level}">6</td>
+                            <td>
+                                <span th:if="${av.eligibleAsMain}" class="badge text-bg-success">Yes</span>
+                                <span th:unless="${av.eligibleAsMain}" class="small text-muted" th:text="${av.ineligibleReason}">reason</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <form class="card-body border-top row g-2 align-items-end" method="post" th:action="@{/interviews/{id}/assign(id=${i.id})}">
+                        <div class="col-md-5">
+                            <label class="form-label small" for="interviewerId">Interviewer</label>
+                            <select class="form-select" id="interviewerId" name="interviewerId" required>
+                                <option th:each="av : ${available}" th:if="${av.eligibleAsMain}" th:value="${av.interviewer.id}"
+                                        th:text="${av.interviewer.firstName}" th:selected="${av.interviewer.id == i.interviewerId}">Peter</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small" for="shadowId">Shadow (optional)</label>
+                            <select class="form-select" id="shadowId" name="shadowId">
+                                <option value="">None</option>
+                                <option th:each="av : ${available}" th:value="${av.interviewer.id}" th:text="${av.interviewer.firstName}"
+                                        th:selected="${av.interviewer.id == i.shadowId}">Nathan</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3"><button class="btn btn-dark w-100" type="submit">Assign</button></div>
+                    </form>
+                </th:block>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    Feedback for this candidate
+                    <span class="small fw-normal text-muted" th:if="${feedback.hiddenCount > 0}"
+                          th:text="${feedback.hiddenCount} + ' hidden until you write yours'">hidden</span>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item text-muted" th:if="${feedback.feedback.isEmpty()}">No feedback you can see yet.</li>
+                    <li class="list-group-item" th:each="f : ${feedback.feedback}">
+                        <div class="d-flex justify-content-between">
+                            <div><span class="fw-semibold" th:text="${f.interviewerName}">Peter</span>
+                                <span class="text-muted" th:text="'· ' + ${f.interviewTypeName}">· type</span></div>
+                            <span th:replace="~{layout :: inclined(${f.inclined})}"></span>
+                        </div>
+                        <div class="feedback-text mt-2" th:text="${f.feedback}">Notes</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card mb-4">
+                <div class="card-header">Candidate</div>
+                <div class="card-body">
+                    <p class="mb-1 fw-semibold" th:text="${c.firstName} + ' ' + ${c.surname ?: ''}">Adam</p>
+                    <p class="mb-1 text-muted" th:text="${c.email}">email</p>
+                    <p class="mb-0 text-muted" th:text="${c.jobFamilyName} + ', level ' + ${c.positionLevel}">family</p>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header">Interview history</div>
+                <ul class="list-group list-group-flush small">
+                    <li class="list-group-item d-flex justify-content-between" th:each="other : ${detail.interviews}">
+                        <a th:href="@{/interviews/{id}(id=${other.id})}" th:text="${other.interviewTypeName}"
+                           th:classappend="${other.id == i.id} ? 'fw-bold' : ''">type</a>
+                        <span><span th:text="${@fmt.dateTime(other.scheduledAt)}">date</span>
+                            <span th:replace="~{layout :: interviewStatus(${other.status})}"></span></span>
+                    </li>
+                </ul>
+            </div>
+            <div class="card" th:if="${canSchedule or canComplete}">
+                <div class="card-header">Manage</div>
+                <div class="card-body">
+                    <form th:if="${canSchedule}" method="post" th:action="@{/interviews/{id}/reschedule(id=${i.id})}" class="d-flex gap-2 mb-3">
+                        <input class="form-control" type="datetime-local" step="3600" name="scheduledAt" required th:value="${@fmt.input(i.scheduledAt)}">
+                        <button class="btn btn-outline-dark text-nowrap" type="submit">Move</button>
+                    </form>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <form th:if="${canSchedule and i.interviewerId != null}" method="post" th:action="@{/interviews/{id}/unassign(id=${i.id})}">
+                            <button class="btn btn-outline-secondary btn-sm" type="submit">Remove interviewers</button>
+                        </form>
+                        <form th:if="${canComplete}" method="post" th:action="@{/interviews/{id}/complete(id=${i.id})}">
+                            <button class="btn btn-outline-success btn-sm" type="submit">Mark completed</button>
+                        </form>
+                        <form th:if="${canSchedule}" method="post" th:action="@{/interviews/{id}/cancel(id=${i.id})}"
+                              onsubmit="return confirm('Cancel this interview?')">
+                            <button class="btn btn-outline-danger btn-sm" type="submit">Cancel interview</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>

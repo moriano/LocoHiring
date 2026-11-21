@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Find interviewers')}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<main class="container pb-5">
+    <div th:replace="~{layout :: flash}"></div>
+    <h1 class="h3 mb-1">Who can interview then?</h1>
+    <p class="text-muted mb-4">Check a time before you agree it with a candidate.</p>
+    <form class="card card-body mb-4 d-flex flex-row gap-2 align-items-end" method="get" th:action="@{/find-interviewers}">
+        <div class="flex-fill">
+            <label class="form-label" for="scheduledAt">Interview start (on the hour)</label>
+            <input class="form-control" type="datetime-local" step="3600" id="scheduledAt" name="scheduledAt" required th:value="${scheduledAt}">
+        </div>
+        <button class="btn btn-dark" type="submit">Search</button>
+    </form>
+    <div class="card" th:if="${available != null}">
+        <div class="card-header" th:text="${available.size()} + ' interviewer(s) free'">free</div>
+        <table class="table mb-0" th:unless="${available.isEmpty()}">
+            <thead class="table-light"><tr><th>Interviewer</th><th>Level</th><th>Job families</th><th>Bar raiser</th></tr></thead>
+            <tbody>
+            <tr th:each="av : ${available}">
+                <td th:text="${av.interviewer.firstName}">Peter</td>
+                <td th:text="${av.interviewer.level}">6</td>
+                <td><span class="badge text-bg-light border me-1" th:each="f : ${av.interviewer.jobFamilies}" th:text="${f.name}">family</span></td>
+                <td th:text="${av.interviewer.barRaiser} ? 'Yes' : ''"></td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="card-body text-muted" th:if="${available.isEmpty()}">Nobody has a free availability block at that time.</div>
+    </div>
+</main>
+<script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>

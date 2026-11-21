@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Find a time · ' + ${detail.candidate.firstName})}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<main class="container pb-5" th:with="a=${detail.application}, c=${detail.candidate}">
+    <div th:replace="~{layout :: flash}"></div>
+    <a class="small" th:href="@{/applications/{id}(id=${a.id})}" th:text="'← ' + ${a.candidateName} + ' · ' + ${a.funnelName}">back</a>
+    <h1 class="h3 mt-1 mb-1">Find a time for <span th:text="${a.candidateName}">Adam</span></h1>
+    <p class="text-muted mb-4">
+        Free hours of interviewers who can lead this interview: active, level <span th:text="${c.positionLevel}">5</span>
+        or above, interviewing for <span th:text="${c.jobFamilyName}">Software Engineer</span>.
+        Already agreed a time with the candidate? <a th:href="@{/applications/{id}(id=${a.id})}">Create the interview at that time</a> instead.
+    </p>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <form method="post" th:action="@{/applications/{id}/book(id=${a.id})}">
+                <div class="card mb-3">
+                    <div class="card-body d-flex flex-wrap gap-3 align-items-end justify-content-between">
+                        <div>
+                            <label class="form-label small mb-1" for="interviewTypeId">Interview to book</label>
+                            <select class="form-select" id="interviewTypeId" name="interviewTypeId">
+                                <option th:each="s : ${steps}" th:value="${s.type().id}" th:selected="${s.type().id == nextType}"
+                                        th:text="${s.type().name} + (${s.interview() != null and s.interview().status.value != 'CANCELLED'} ? ' (already scheduled)' : '')">Phone Screen</option>
+                            </select>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <a class="btn btn-outline-secondary" th:classappend="${page == 0} ? 'disabled' : ''"
+                               th:href="@{/applications/{id}/find-time(id=${a.id},page=${page - 1})}">&larr; Earlier</a>
+                            <span class="btn btn-outline-secondary disabled" th:text="${@fmt.date(from)} + ' – ' + ${@fmt.date(to)}">range</span>
+                            <a class="btn btn-outline-secondary" th:href="@{/applications/{id}/find-time(id=${a.id},page=${page + 1})}">Later &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header" th:text="${slotCount} + ' available hour' + (${slotCount == 1} ? '' : 's')">slots</div>
+                    <div class="card-body text-muted" th:if="${byDay.isEmpty()}">
+                        No suitable interviewer has free availability in these two weeks. Try later dates, or ask an
+                        interviewer to add availability.
+                    </div>
+                    <ul class="list-group list-group-flush" th:unless="${byDay.isEmpty()}">
+                        <li class="list-group-item" th:each="day : ${byDay}">
+                            <div class="fw-semibold mb-2" th:text="${@fmt.date(day.key)}">Mon</div>
+                            <div class="d-flex align-items-center flex-wrap gap-2 mb-2" th:each="slot : ${day.value}">
+                                <span class="slot fw-semibold" th:text="${slot.startHour} + ':00–' + ${slot.startHour + 1} + ':00'">10:00</span>
+                                <button class="btn btn-sm btn-outline-primary" type="submit" name="slot"
+                                        th:each="i : ${slot.interviewers}" th:value="${slot.scheduledAt} + '|' + ${i.id}"
+                                        th:text="'Book with ' + ${i.firstName} + ' (L' + ${i.level} + ')'">Book with Peter</button>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">Times to offer the candidate</div>
+                <div class="card-body">
+                    <p class="small text-muted">Send these to <span th:text="${c.email}">email</span>, then come back and
+                        book the one they choose.</p>
+                    <textarea class="form-control small mb-2" id="offer" rows="10" readonly
+                              th:text="${offerText}"></textarea>
+                    <button class="btn btn-sm btn-outline-dark" type="button"
+                            onclick="navigator.clipboard.writeText(document.getElementById('offer').value); this.textContent='Copied'">Copy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>

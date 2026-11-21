@@ -1,0 +1,30 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: locohiring-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/locohiring}
+    username: ${DB_USERNAME:locohiring}
+    password: ${DB_PASSWORD:locohiring}
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      adjust-dates-to-context-time-zone: false
+    default-property-inclusion: non_null
+
+locohiring:
+  jwt:
+    # Override JWT_SECRET outside local development. At least 32 characters.
+    secret: ${JWT_SECRET:local-development-secret-change-me-0123456789}
+    access-ttl: 5m
+    refresh-ttl: 8h
+
+springdoc:
+  swagger-ui:
+    url: /openapi.yaml
+    path: /swagger-ui.html

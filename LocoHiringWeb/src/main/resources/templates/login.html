@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Log in')}"></head>
+<body class="d-flex align-items-center min-vh-100">
+<main class="container">
+    <div class="card login-card mx-auto p-4">
+        <h1 class="h3 mb-1 fw-bold">Loco<span class="text-warning">Hiring</span></h1>
+        <p class="text-muted mb-4">Do you want to hire employees? Do not go Loco!</p>
+        <div class="alert alert-warning" th:if="${param.expired}">Your session expired. Please log in again.</div>
+        <div class="alert alert-danger" th:if="${error}" th:text="${error}">Error</div>
+        <form th:action="@{/login}" method="post">
+            <div class="mb-3">
+                <label class="form-label" for="email">Email</label>
+                <input class="form-control" id="email" name="email" type="email" required autofocus th:value="${email}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-control" id="password" name="password" type="password" required>
+            </div>
+            <button class="btn btn-dark w-100" type="submit">Log in</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Audit log')}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<main class="container pb-5">
+    <h1 class="h3 mb-4">Audit log</h1>
+    <div class="card">
+        <table class="table table-sm mb-0">
+            <thead class="table-light"><tr><th>When</th><th>Who</th><th>What</th><th>Application</th></tr></thead>
+            <tbody>
+            <tr th:each="e : ${events}">
+                <td class="text-nowrap small" th:text="${@fmt.dateTime(e.timestamp)}">date</td>
+                <td class="small" th:text="${e.email}">who</td>
+                <td th:text="${e.message}">what</td>
+                <td><a th:if="${e.applicationId != null}" th:href="@{/applications/{id}(id=${e.applicationId})}"
+                       th:text="'#' + ${e.applicationId}">#1</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+<script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>

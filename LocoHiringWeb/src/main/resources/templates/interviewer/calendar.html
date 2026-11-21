@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Calendar')}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<main class="container pb-5">
+    <div th:replace="~{layout :: flash}"></div>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h1 class="h3 mb-0">Interview availability</h1>
+        <form th:if="${interviewers != null}" method="get" th:action="@{/calendar}" class="d-flex gap-2">
+            <select class="form-select" name="interviewerId" onchange="this.form.submit()">
+                <option value="" th:text="${me.interviewer()} ? 'My calendar' : 'Choose an interviewer'">Choose</option>
+                <option th:each="i : ${interviewers}" th:value="${i.id}" th:text="${i.firstName} + ' (level ' + ${i.level} + ')'"
+                        th:selected="${i.id == interviewerId}">Peter</option>
+            </select>
+        </form>
+    </div>
+
+    <th:block th:if="${byDay != null}">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">Add availability</div>
+                <form class="card-body" method="post" th:action="@{/calendar}">
+                    <input type="hidden" name="interviewerId" th:if="${interviewerId != null}" th:value="${interviewerId}">
+                    <div class="mb-3">
+                        <label class="form-label" for="date">Day</label>
+                        <input class="form-control" type="date" id="date" name="date" required th:min="${today}" th:value="${today}">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label" for="startHour">From</label>
+                            <select class="form-select" id="startHour" name="startHour">
+                                <option th:each="h : ${#numbers.sequence(7, 20)}" th:value="${h}" th:text="${h} + ':00'" th:selected="${h == 13}">13:00</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label class="form-label" for="endHour">To</label>
+                            <select class="form-select" id="endHour" name="endHour">
+                                <option th:each="h : ${#numbers.sequence(8, 21)}" th:value="${h}" th:text="${h} + ':00'" th:selected="${h == 14}">14:00</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="recurring" name="recurring" value="true">
+                        <label class="form-check-label" for="recurring">Repeat every week (next 8 weeks)</label>
+                    </div>
+                    <button class="btn btn-dark w-100" type="submit">Add one-hour blocks</button>
+                    <p class="small text-muted mt-2 mb-0">Each hour becomes a block a recruiter can book for one interview.</p>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span th:text="${@fmt.date(from)} + ' – ' + ${@fmt.date(to)}">range</span>
+                    <div class="btn-group btn-group-sm">
+                        <a class="btn btn-outline-secondary" th:href="@{/calendar(week=${week - 4},interviewerId=${interviewerId})}">&larr; Earlier</a>
+                        <a class="btn btn-outline-secondary" th:href="@{/calendar(interviewerId=${interviewerId})}">Today</a>
+                        <a class="btn btn-outline-secondary" th:href="@{/calendar(week=${week + 4},interviewerId=${interviewerId})}">Later &rarr;</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-0" th:if="${byDay.isEmpty()}">No availability in these weeks.</p>
+                    <div class="mb-3" th:each="day : ${byDay}">
+                        <div class="fw-semibold mb-2" th:text="${@fmt.date(day.key)}">Mon</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="slot border rounded px-2 py-1 bg-white" th:each="b : ${day.value}"
+                                 th:classappend="${b.interviewId != null} ? 'border-primary' : ''">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-semibold" th:text="${b.startHour} + ':00–' + ${b.endHour} + ':00'">13:00</span>
+                                    <form th:if="${b.interviewId == null and !day.key.isBefore(today)}" method="post"
+                                          th:action="@{/calendar/{id}/delete(id=${b.id},interviewerId=${interviewerId})}">
+                                        <button class="btn btn-link btn-sm text-danger p-0 ms-2" title="Remove">&times;</button>
+                                    </form>
+                                </div>
+                                <div class="small" th:if="${b.interviewId != null}">
+                                    <a th:href="@{/interviews/{id}(id=${b.interviewId})}" th:text="${b.candidateName}">Adam</a>
+                                    <div class="text-muted" th:text="${b.interviewTypeName}">Phone Screen</div>
+                                </div>
+                                <div class="small text-success" th:if="${b.interviewId == null}">Free</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </th:block>
+    <p class="text-muted" th:if="${byDay == null}">Choose an interviewer to see their calendar.</p>
+</main>
+<script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>
