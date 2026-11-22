@@ -315,3 +315,45 @@ There will also be a parent maven file in the top directory (alongside with the 
 can load all the projects at once in the IDE and compile them with a single command. 
 
 All containers receive a TZ env var that sets the system timestamp to Australia/Sydney. 
+
+## Screenshots
+
+**Login**
+
+![Login page](screenshots/01-login.png)
+
+**Recruiter dashboard:** every candidate of the recruiter, with interview progress, missing feedback, debrief state and the next step.
+
+![Recruiter dashboard](screenshots/02-recruiter-dashboard.png)
+
+**Application:** the candidate's interviews, the feedback written so far and the full history of changes.
+
+![Application page](screenshots/03-application.png)
+
+**Find a time from interviewer availability:** free hours of the interviewers who can lead the interview, a list of times to send to the candidate, and one-click booking.
+
+![Find a time for a candidate](screenshots/04-find-a-time.png)
+
+**Who can interview then?** The other way around: the time is agreed with the candidate first.
+
+![Find interviewers for a time](screenshots/05-find-interviewers.png)
+
+**Interviewer dashboard:** pending feedback (flagged when late), upcoming interviews and debriefs.
+
+![Interviewer dashboard](screenshots/06-interviewer-dashboard.png)
+
+**Feedback form:** other interviewers' feedback stays hidden until the interviewer writes their own.
+
+![Feedback form](screenshots/07-feedback-form.png)
+
+**Interviewer calendar:** one-hour availability blocks, free or booked.
+
+![Interviewer calendar](screenshots/08-calendar.png)
+
+**Admin user management:** create, edit and deactivate recruiters and interviewers.
+
+![Admin users page](screenshots/09-admin-users.png)
+
+**Swagger UI** for the REST API.
+
+![Swagger UI](screenshots/10-swagger.png)
